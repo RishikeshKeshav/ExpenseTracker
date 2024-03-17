@@ -16,7 +16,15 @@ public class UserServiceImplementation implements UserService {
     UserRepository userRepository;
     @Override
     public User validateUser(String email, String password) throws EtAuthException {
-        return null;
+
+        if(email!=null){
+            email = email.toLowerCase();
+        }
+        if(password!=null){
+            password = password.toLowerCase();
+        }
+    return userRepository.findByEmailAndPassword(email,password);
+
     }
 
     @Override
@@ -34,6 +42,7 @@ public class UserServiceImplementation implements UserService {
             throw new EtAuthException("email is already registered");
         }
         Integer userId = userRepository.create(firstName,lastName,email,password);
+        System.out.print(userId);
         return userRepository.findById(userId);
     }
 }

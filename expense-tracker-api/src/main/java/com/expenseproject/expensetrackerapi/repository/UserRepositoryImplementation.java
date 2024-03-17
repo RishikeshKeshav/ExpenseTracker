@@ -2,8 +2,9 @@ package com.expenseproject.expensetrackerapi.repository;
 
 import com.expenseproject.expensetrackerapi.domain.User;
 import com.expenseproject.expensetrackerapi.exception.EtAuthException;
-import com.sun.jdi.PrimitiveValue;
+//import com.sun.jdi.PrimitiveValue;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -13,14 +14,15 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.util.regex.Pattern;
+//import java.util.Objects;
+//import java.util.regex.Pattern;
 
 @Repository
 public class UserRepositoryImplementation implements UserRepository{
     private static final String SQL_CREATE = "INSERT INTO ET_USERS(USER_ID, FIRST_NAME, LAST_NAME, EMAIL, PASSWORD) VALUES(NEXTVAL('ET_USERS_SEQ'), ?, ?, ?, ?)";
     private static final String SQL_COUNT_BY_EMAIL = "SELECT COUNT(*) FROM ET_USERS WHERE EMAIL = ? ";
-
-    private static final String SQL_FIND_BY_ID = "SELECT USER_ID,FIRSTNAME,LASTNAME,EMAIL,PASSWORD FROM ET_USERS WHERE USER_ID = ?";
+    private static final String SQL_FIND_BY_EMAIL_PASSWORD  = "SELECT USER_ID,FIRST_NAME,LAST_NAME,EMAIL,PASSWORD FROM ET_USERS WHERE EMAIL = ?";
+    private static final String SQL_FIND_BY_ID = "SELECT USER_ID,FIRST_NAME,LAST_NAME,EMAIL,PASSWORD FROM ET_USERS WHERE USER_ID = ?";
 
 
     @Autowired
@@ -38,7 +40,7 @@ public class UserRepositoryImplementation implements UserRepository{
                 ps.setString(4, password);
                 return ps;
             }, keyHolder);
-            return (Integer) keyHolder.getKeys().get("USER_ID");
+            return (Integer) (Integer) keyHolder.getKeys().get("USER_ID");
         }
       catch(Exception e){
           throw new EtAuthException("Invalid details of users");
@@ -48,9 +50,15 @@ public class UserRepositoryImplementation implements UserRepository{
 
     @Override
     public User findByEmailAndPassword(String email, String password) throws EtAuthException {
-
-
-        return null;
+        try{
+            User user = jdbcTemplate.queryForObject(SQL_FIND_BY_EMAIL_PASSWORD, new Object[]{email}, userRowMapper);
+           if(!password.equals(user.getPassword())){
+               throw new EtAuthException("invalid password");
+           }
+            return user;
+        }catch(EmptyResultDataAccessException e){
+            throw new EtAuthException("invalid user email and password");
+        }
     }
 
     @Override
@@ -66,8 +74,8 @@ public class UserRepositoryImplementation implements UserRepository{
 
     private RowMapper<User> userRowMapper = ((rs,rowNum) -> {
         return new User(rs.getInt("USER_ID"),
-                rs.getString("FIRSTNAME"),
-                rs.getString("LASTNAME"),
+                rs.getString("FIRST_NAME"),
+                rs.getString("LAST_NAME"),
                 rs.getString("EMAIL"),
                 rs.getString("PASSWORD")
                 );
