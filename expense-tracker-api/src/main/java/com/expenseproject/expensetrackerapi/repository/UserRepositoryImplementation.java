@@ -3,6 +3,7 @@ package com.expenseproject.expensetrackerapi.repository;
 import com.expenseproject.expensetrackerapi.domain.User;
 import com.expenseproject.expensetrackerapi.exception.EtAuthException;
 //import com.sun.jdi.PrimitiveValue;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -31,13 +32,14 @@ public class UserRepositoryImplementation implements UserRepository{
     @Override
     public Integer create(String firstName, String lastName, String email, String password) throws EtAuthException {
       try  {
+          String hashedPassword =  BCrypt.hashpw(password,BCrypt.gensalt(10));
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(connection -> {
                 PreparedStatement ps = connection.prepareStatement(SQL_CREATE, Statement.RETURN_GENERATED_KEYS);
                 ps.setString(1, firstName);
                 ps.setString(2, lastName);
                 ps.setString(3, email);
-                ps.setString(4, password);
+                ps.setString(4, hashedPassword);
                 return ps;
             }, keyHolder);
             return (Integer) (Integer) keyHolder.getKeys().get("USER_ID");
@@ -52,7 +54,7 @@ public class UserRepositoryImplementation implements UserRepository{
     public User findByEmailAndPassword(String email, String password) throws EtAuthException {
         try{
             User user = jdbcTemplate.queryForObject(SQL_FIND_BY_EMAIL_PASSWORD, new Object[]{email}, userRowMapper);
-           if(!password.equals(user.getPassword())){
+            if(!BCrypt.checkpw(password,user.getPassword())){
                throw new EtAuthException("invalid password");
            }
             return user;
