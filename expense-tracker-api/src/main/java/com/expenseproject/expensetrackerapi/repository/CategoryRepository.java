@@ -4,9 +4,11 @@ import com.expenseproject.expensetrackerapi.domain.Category;
 import com.expenseproject.expensetrackerapi.exception.EtBadRequestException;
 import com.expenseproject.expensetrackerapi.exception.EtResourceNotFoundException;
 import org.springframework.data.relational.core.sql.In;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface CategoryRepository {
     List<Category> findAll(Integer userId) throws EtResourceNotFoundException;
 

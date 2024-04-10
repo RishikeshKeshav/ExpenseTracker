@@ -13,7 +13,7 @@ public class Category {
         this.userId = userId;
         this.title = title;
         this.description = description;
-        this.totalExpense = totalExpense;
+        this.totalExpense = this.totalExpense;
     }
 
 
